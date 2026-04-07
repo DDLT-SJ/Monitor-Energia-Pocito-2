@@ -377,17 +377,16 @@
     }
 
     // ========================================================================
-    // REGISTRAR SERVICE WORKER (PWA)
+    // INICIAR CUANDO DOM ESTE LISTO
     // ========================================================================
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
-        .then(() => console.log('Service Worker registrado'));
-    }
-
-    // ========================================================================
-    // INICIAR
-    // ========================================================================
-    init();
+    document.addEventListener('DOMContentLoaded', () => {
+      // Registrar Service Worker (PWA)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker registrado'));
+      }
+      init();
+    });
   </script>
 </body>
 </html>
