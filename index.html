@@ -188,8 +188,8 @@
         <div class="resumen-label">Con Falla</div>
       </div>
       <div class="resumen-card">
-        <div class="resumen-numero" id="uptimePercent">100%</div>
-        <div class="resumen-label">Disponibilidad</div>
+        <div class="resumen-numero" id="voltajeBateriaDisplay">--</div>
+        <div class="resumen-label">Batería</div>
       </div>
     </div>
 
@@ -216,27 +216,29 @@
       username: 'Daniel_SJ',
       password: 'Ddelatorre1966',
       clientId: 'WebDashboard_' + Math.random().toString(16).substr(2, 8),
-      topic: 'Energia/Pocito'
+      topic: 'Energia/Pocito',
+      topicBateria: 'Energia/Pocito/bateria'
     };
 
     // ========================================================================
     // NOMBRES DE ENTRADAS
     // ========================================================================
     const PIN_NOMBRES = [
-      "Entrada termomagnética Principal",
-      "Salida Termomagnética Principal",
-      "Salida Protección Sobrevoltaje",
-      "Salida Disyuntor Diferencial",
-      "Salida Termomagnética Tomas Comedor (Heladera)",
-      "Salida Termomagnética Iluminación Comedor (Cámaras)",
-      "Salida Termomagnética Bombas Pozo y Riego",
-      "Salida Termomagnética Bomba Piscina"
+      "Entrada Interruptor Principal",
+      "Salida Interruptor Principal",
+      "Salida Interruptor Sobrevoltaje",
+      "Salida Interruptor Diferencial",
+      "Salida Interruptor Heladera",
+      "Salida Interruptor Cámaras",
+      "Salida Interruptor Bombas Principales",
+      "Salida Interruptor Bomba Piscina"
     ];
 
     // ========================================================================
     // ESTADO
     // ========================================================================
     let estadoEntradas = [1, 1, 1, 1, 1, 1, 1, 1]; // 1 = normal, 0 = falla
+    let voltajeBateria = 0.0;
     let mqttClient = null;
 
     // ========================================================================
@@ -290,6 +292,7 @@
         document.getElementById('mqttLed').classList.add('connected');
         document.getElementById('mqttStatus').textContent = 'Conectado';
         mqttClient.subscribe(MQTT_CONFIG.topic);
+        mqttClient.subscribe(MQTT_CONFIG.topicBateria);
       });
 
       mqttClient.on('message', (topic, message) => {
@@ -331,6 +334,12 @@
             actualizarEntrada(i, estado);
           }
         }
+      }
+
+      // Actualizar batería si viene en el mensaje
+      if (data.bateria_voltaje) {
+        voltajeBateria = parseFloat(data.bateria_voltaje);
+        document.getElementById('voltajeBateriaDisplay').textContent = voltajeBateria.toFixed(2) + 'V';
       }
 
       // Actualizar resumen
