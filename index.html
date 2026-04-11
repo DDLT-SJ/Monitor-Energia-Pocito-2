@@ -211,7 +211,6 @@
         <div class="led" id="mqttLed"></div>
         <span id="mqttStatus">Desconectado</span>
         <button class="btn-control" id="btnConnect" onclick="toggleConnection()">Conectar</button>
-        <button class="btn-control" id="btnSimulacion" onclick="toggleSimulacion()" style="margin-left:8px;">🎮 Simular</button>
       </div>
       <span id="ipDisplay">--</span>
     </div>
@@ -477,69 +476,6 @@
     }
 
     // ========================================================================
-    // SIMULADOR DE DATOS (para testing sin ESP32)
-    // ========================================================================
-    let simulacionActiva = false;
-    let intervaloSimulacion = null;
-
-    function toggleSimulacion() {
-      if (simulacionActiva) {
-        detenerSimulacion();
-        document.getElementById('btnSimulacion').textContent = '🎮 Simular';
-        document.getElementById('btnSimulacion').classList.remove('disconnect');
-      } else {
-        iniciarSimulacion();
-        document.getElementById('btnSimulacion').textContent = '⏹ Detener';
-        document.getElementById('btnSimulacion').classList.add('disconnect');
-      }
-    }
-
-    function iniciarSimulacion() {
-      if (simulacionActiva) return;
-      
-      simulacionActiva = true;
-      console.log('SIMULACION INICIADA');
-      
-      intervaloSimulacion = setInterval(() => {
-        // Simular datos aleatorios de entradas
-        const datosSimulados = {
-          ip: '192.168.1.' + Math.floor(Math.random() * 254),
-          entradas: {}
-        };
-
-        for (let i = 0; i < 8; i++) {
-          // 80% probabilidad de normal, 20% de falla
-          datosSimulados.entradas['P' + i] = Math.random() > 0.2 ? 1 : 0;
-        }
-
-        console.log('MQTT Simulado:', datosSimulados);
-        procesarMensaje(datosSimulados);
-
-        // Simular voltaje de batería (3.5V - 4.2V)
-        const voltajeSimulado = (Math.random() * 0.7 + 3.5).toFixed(2);
-        const bateriaSimulada = { bateria_voltaje: voltajeSimulado };
-        console.log('Batería Simulada:', bateriaSimulada);
-        procesarMensaje(bateriaSimulada);
-
-      }, 3000);  // Actualiza cada 3 segundos
-    }
-
-    function detenerSimulacion() {
-      if (!simulacionActiva) return;
-      
-      clearInterval(intervaloSimulacion);
-      simulacionActiva = false;
-      console.log('SIMULACION DETENIDA');
-      
-      // Resetear a estado desconectado
-      setAllEntradasDesconectado();
-      document.getElementById('entradasOk').textContent = '--';
-      document.getElementById('entradasFalla').textContent = '--';
-      document.getElementById('uptimePercent').textContent = '--';
-      document.getElementById('voltajeBateriaDisplay').textContent = '--';
-    }
-
-    // ========================================================================
     // TOGGLE CONEXION MANUAL
     // ========================================================================
     function toggleConnection() {
@@ -547,7 +483,6 @@
       
       if (conexionManual) {
         // Usuario quiere desconectar
-        detenerSimulacion();
         if (mqttClient) {
           mqttClient.end(true);
           mqttClient = null;

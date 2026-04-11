@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Control MQTT - Pocito</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00d9ff;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel h2 {
+      font-size: 1rem;
+      margin-bottom: 15px;
+      color: #00d9ff;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      opacity: 0.7;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #00d9ff;
+    }
+
+    .pines-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .pin-control {
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .pin-control label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 5px;
+    }
+
+    .pin-control select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .pin-control select.normal {
+      background: #2e7d32;
+      color: #fff;
+    }
+
+    .pin-control select.falla {
+      background: #c62828;
+      color: #fff;
+    }
+
+    .bateria-input {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bateria-input input {
+      width: 100px;
+    }
+
+    .bateria-input span {
+      color: #00ff88;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-enviar {
+      background: #00d9ff;
+      color: #1a1a2e;
+    }
+
+    .btn-enviar:hover {
+      background: #33e0ff;
+    }
+
+    .btn-enviar:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    .status.ok {
+      background: rgba(0,255,136,0.2);
+      color: #00ff88;
+    }
+
+    .status.error {
+      background: rgba(255,68,68,0.2);
+      color: #ff4444;
+    }
+
+    .status.enviando {
+      background: rgba(0,217,255,0.2);
+      color: #00d9ff;
+    }
+
+    .log {
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-radius: 4px;
+    }
+
+    .log-entry.ok { background: rgba(0,255,136,0.1); color: #00ff88; }
+    .log-entry.error { background: rgba(255,68,68,0.1); color: #ff4444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📡 Panel Control MQTT</h1>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="panel">
+      <h2>📶 Conexión HiveMQ</h2>
+      <div class="form-group">
+        <label>Host</label>
+        <input type="text" id="mqttHost" value="748863d67a8940b8957fbc4523ac7f5d.s1.eu.hivemq.cloud">
+      </div>
+      <div class="form-group">
+        <label>Puerto WebSocket</label>
+        <input type="number" id="mqttPort" value="8884">
+      </div>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="mqttUser" value="Daniel_SJ">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="mqttPass" value="Ddelatorre1966">
+      </div>
+      <div class="form-group">
+        <label>Topic Principal</label>
+        <input type="text" id="mqttTopic" value="Energia/Pocito">
+      </div>
+      <div class="form-group">
+        <label>Topic Batería</label>
+        <input type="text" id="mqttTopicBateria" value="Energia/Pocito/bateria">
+      </div>
+    </div>
+
+    <!-- ENTRADAS DIGITALES -->
+    <div class="panel">
+      <h2>🔌 Entradas Digitales (P0-P7)</h2>
+      <div class="pines-grid">
+        <div class="pin-control">
+          <label>P0: Principal Ent</label>
+          <select id="pin0" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P1: Principal Sal</label>
+          <select id="pin1" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P2: Sobrevoltaje</label>
+          <select id="pin2" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P3: Diferencial</label>
+          <select id="pin3" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P4: Heladera</label>
+          <select id="pin4" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P5: Cámaras</label>
+          <select id="pin5" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P6: Bombas</label>
+          <select id="pin6" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+        <div class="pin-control">
+          <label>P7: Piscina</label>
+          <select id="pin7" class="normal">
+            <option value="0" selected>Normal</option>
+            <option value="1">FALLA</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- BATERÍA -->
+    <div class="panel">
+      <h2>🔋 Batería Litio</h2>
+      <div class="form-group">
+        <label>Voltaje (V)</label>
+        <div class="bateria-input">
+          <input type="number" id="bateriaVoltaje" value="3.85" step="0.01" min="3.0" max="4.5">
+          <span id="bateriaDisplay">3.85V</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <button class="btn btn-enviar" id="btnEnviar" onclick="enviarDatos()">📤 ENVIAR A MQTT</button>
+
+    <div class="status" id="status"></div>
+
+    <!-- LOG -->
+    <div class="panel">
+      <h2>📋 Log de Envíos</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script>
+    let mqttClient = null;
+
+    // Actualizar display de batería al cambiar
+    document.getElementById('bateriaVoltaje').addEventListener('input', function(e) {
+      document.getElementById('bateriaDisplay').textContent = e.target.value + 'V';
+    });
+
+    // Cambiar color del select al cambiar estado
+    document.querySelectorAll('select[id^="pin"]').forEach(select => {
+      select.addEventListener('change', function() {
+        if (this.value === "1") {
+          this.className = "falla";
+        } else {
+          this.className = "normal";
+        }
+      });
+    });
+
+    function log(mensaje, tipo = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry ' + tipo;
+      entry.textContent = '[' + new Date().toLocaleTimeString() + '] ' + mensaje;
+      logDiv.insertBefore(entry, logDiv.firstChild);
+    }
+
+    function mostrarStatus(mensaje, tipo) {
+      const status = document.getElementById('status');
+      status.textContent = mensaje;
+      status.className = 'status ' + tipo;
+    }
+
+    async function enviarDatos() {
+      const btn = document.getElementById('btnEnviar');
+      const host = document.getElementById('mqttHost').value;
+      const port = document.getElementById('mqttPort').value;
+      const user = document.getElementById('mqttUser').value;
+      const pass = document.getElementById('mqttPass').value;
+      const topic = document.getElementById('mqttTopic').value;
+      const topicBateria = document.getElementById('mqttTopicBateria').value;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Conectando...';
+      mostrarStatus('Conectando a HiveMQ...', 'enviando');
+      log('Iniciando conexión a ' + host + ':' + port);
+
+      try {
+        // Conectar MQTT
+        const url = `wss://${host}:${port}/mqtt`;
+        mqttClient = mqtt.connect(url, {
+          username: user,
+          password: pass,
+          clientId: 'PanelControl_' + Math.random().toString(16).substr(2, 8),
+          clean: true,
+          reconnectPeriod: 5000
+        });
+
+        // Esperar conexión
+        await new Promise((resolve, reject) => {
+          mqttClient.on('connect', () => {
+            log('Conectado a MQTT', 'ok');
+            resolve();
+          });
+          
+          mqttClient.on('error', (err) => {
+            log('Error de conexión: ' + err.message, 'error');
+            reject(err);
+          });
+
+          setTimeout(() => reject(new Error('Timeout de conexión')), 10000);
+        });
+
+        btn.textContent = '⏳ Enviando...';
+        mostrarStatus('Enviando datos...', 'enviando');
+
+        //Construir JSON de entradas
+        let jsonEntradas = '{"ip":"192.168.1.100","entradas":{';
+        for (let i = 0; i < 8; i++) {
+          const valor = document.getElementById('pin' + i).value;
+          jsonEntradas += '"P' + i + '":' + valor;
+          if (i < 7) jsonEntradas += ',';
+        }
+        jsonEntradas += '}}';
+
+        // Publicar entradas
+        mqttClient.publish(topic, jsonEntradas);
+        log('Entradas enviadas: ' + jsonEntradas, 'ok');
+
+        // Publicar batería
+        const voltaje = parseFloat(document.getElementById('bateriaVoltaje').value);
+        const jsonBateria = '{"bateria_voltaje":' + voltaje.toFixed(2) + '}';
+        mqttClient.publish(topicBateria, jsonBateria);
+        log('Batería enviada: ' + jsonBateria, 'ok');
+
+        // Cerrar conexión
+        mqttClient.end();
+        mqttClient = null;
+
+        btn.textContent = '📤 ENVIAR A MQTT';
+        btn.disabled = false;
+        mostrarStatus('✅ Datos enviados correctamente', 'ok');
+        log('Envío completado', 'ok');
+
+      } catch (error) {
+        btn.textContent = '📤 ENVIAR A MQTT';
+        btn.disabled = false;
+        mostrarStatus('❌ Error: ' + error.message, 'error');
+        log('Error: ' + error.message, 'error');
+        
+        if (mqttClient) {
+          mqttClient.end();
+          mqttClient = null;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
