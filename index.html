@@ -169,6 +169,37 @@
     .resumen-card.falla .resumen-numero {
       color: #ff4444;
     }
+
+    .btn-control {
+      background: rgba(0,217,255,0.2);
+      border: 1px solid #00d9ff;
+      color: #00d9ff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      margin-left: 10px;
+    }
+
+    .btn-control:hover {
+      background: rgba(0,217,255,0.3);
+    }
+
+    .btn-control.disconnect {
+      background: rgba(255,68,68,0.2);
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    .btn-control.disconnect:hover {
+      background: rgba(255,68,68,0.3);
+    }
+
+    .btn-control:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -179,6 +210,7 @@
       <div class="status-indicator">
         <div class="led" id="mqttLed"></div>
         <span id="mqttStatus">Desconectado</span>
+        <button class="btn-control" id="btnConnect" onclick="toggleConnection()">Conectar</button>
       </div>
       <span id="ipDisplay">--</span>
     </div>
@@ -249,12 +281,14 @@
     let estadoEntradas = [1, 1, 1, 1, 1, 1, 1, 1]; // 1 = normal, 0 = falla
     let voltajeBateria = 0.0;
     let mqttClient = null;
+    let conexionManual = false;  // false = auto, true = forzado por usuario
 
     // ========================================================================
     // INICIALIZAR
     // ========================================================================
     function init() {
       crearEntradasGrid();
+      actualizarBotonEstado();
       conectarMQTT();
     }
 
@@ -306,6 +340,7 @@
         document.getElementById('mqttStatus').textContent = 'Conectado';
         mqttClient.subscribe(MQTT_CONFIG.topic);
         mqttClient.subscribe(MQTT_CONFIG.topicBateria);
+        actualizarBotonEstado();
       });
 
       mqttClient.on('reconnect', () => {
@@ -317,6 +352,7 @@
         document.getElementById('mqttLed').classList.remove('connected');
         document.getElementById('mqttStatus').textContent = 'Desconectado';
         setAllEntradasDesconectado();
+        actualizarBotonEstado();
       });
 
       mqttClient.on('message', (topic, message) => {
@@ -426,6 +462,44 @@
         card.className = 'entrada-card desconectado';
         estadoEl.textContent = '--';
         iconoEl.textContent = '⚪';
+      }
+    }
+
+    // ========================================================================
+    // TOGGLE CONEXION MANUAL
+    // ========================================================================
+    function toggleConnection() {
+      conexionManual = !conexionManual;
+      
+      if (conexionManual) {
+        // Usuario quiere desconectar
+        if (mqttClient) {
+          mqttClient.end(true);
+          mqttClient = null;
+        }
+        document.getElementById('mqttLed').classList.remove('connected');
+        document.getElementById('mqttLed').classList.remove('error');
+        document.getElementById('mqttStatus').textContent = 'Desconectado (Manual)';
+        setAllEntradasDesconectado();
+      } else {
+        // Usuario quiere conectar
+        conectarMQTT();
+      }
+      
+      actualizarBotonEstado();
+    }
+
+    // ========================================================================
+    // ACTUALIZAR ESTADO DEL BOTON
+    // ========================================================================
+    function actualizarBotonEstado() {
+      const btn = document.getElementById('btnConnect');
+      if (conexionManual) {
+        btn.textContent = 'Conectar';
+        btn.classList.add('disconnect');
+      } else {
+        btn.textContent = 'Desconectar';
+        btn.classList.remove('disconnect');
       }
     }
 
