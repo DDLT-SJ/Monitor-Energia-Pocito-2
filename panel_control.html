@@ -229,57 +229,57 @@
         <div class="pin-control">
           <label>P0: Entrada Int. Principal</label>
           <select id="pin0" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P1: Salida Int. Principal</label>
-          <select id="pin1" class="falla">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+          <select id="pin1" class="normal">
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P2: Salida Int. Sobrevoltaje</label>
           <select id="pin2" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P3: Salida Int. Diferencial</label>
           <select id="pin3" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P4: Salida Int. Heladera</label>
           <select id="pin4" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P5: Salida Int. Cámaras</label>
           <select id="pin5" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P6: Salida Int. Bombas</label>
           <select id="pin6" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
         <div class="pin-control">
           <label>P7: Salida Int. Piscina</label>
           <select id="pin7" class="normal">
-            <option value="0">Normal 🟢</option>
-            <option value="1" selected>FALLA 🔴</option>
+            <option value="0" selected>🟢 Normal</option>
+            <option value="1">🔴 FALLA</option>
           </select>
         </div>
       </div>
@@ -399,7 +399,8 @@
         ];
 
         // Construir JSON de entradas (mismo formato que ESP32)
-        let jsonEntradas = '{"ip":"192.168.1.100","entradas":{';
+        const ipIngresada = document.getElementById('ipDispositivo').value || '192.168.1.100';
+        let jsonEntradas = '{"ip":"' + ipIngresada + '","entradas":{';
         for (let i = 0; i < 8; i++) {
           const valor = document.getElementById('pin' + i).value;
           jsonEntradas += '"' + PIN_KEYS[i] + '":' + valor;
