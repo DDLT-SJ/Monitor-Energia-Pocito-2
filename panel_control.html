@@ -52,7 +52,7 @@
       opacity: 0.7;
     }
 
-    .form-group input {
+    .form-group input, .form-group select {
       width: 100%;
       padding: 10px;
       border-radius: 8px;
@@ -62,9 +62,34 @@
       font-size: 0.9rem;
     }
 
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       outline: none;
       border-color: #00d9ff;
+    }
+
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrapper input {
+      padding-right: 40px;
+      width: 100%;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      opacity: 0.7;
+    }
+
+    .toggle-password:hover {
+      opacity: 1;
     }
 
     .pines-grid {
@@ -214,7 +239,10 @@
       </div>
       <div class="form-group">
         <label>Contraseña</label>
-        <input type="password" id="mqttPass" value="Ddelatorre1966">
+        <div class="password-wrapper">
+          <input type="password" id="mqttPass" value="Ddelatorre1966">
+          <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+        </div>
       </div>
       <div class="form-group">
         <label>Topic Principal</label>
@@ -332,6 +360,19 @@
         }
       });
     });
+
+    // Toggle mostrar/ocultar contraseña
+    function togglePassword() {
+      const input = document.getElementById('mqttPass');
+      const btn = document.querySelector('.toggle-password');
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = '🙈';
+      } else {
+        input.type = "password";
+        btn.textContent = '👁️';
+      }
+    }
 
     function log(mensaje, tipo = 'info') {
       const logDiv = document.getElementById('log');
