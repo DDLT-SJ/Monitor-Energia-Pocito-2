@@ -398,14 +398,14 @@
           "termo_bomba_pileta"
         ];
 
-        // Construir JSON de entradas (igual formato que ESP32)
-        let jsonEntradas = '{';
+        // Construir JSON de entradas (mismo formato que ESP32)
+        let jsonEntradas = '{"ip":"192.168.1.100","entradas":{';
         for (let i = 0; i < 8; i++) {
           const valor = document.getElementById('pin' + i).value;
           jsonEntradas += '"' + PIN_KEYS[i] + '":' + valor;
           if (i < 7) jsonEntradas += ',';
         }
-        jsonEntradas += '}';
+        jsonEntradas += '}}';
 
         // Publicar entradas
         mqttClient.publish(topic, jsonEntradas);
