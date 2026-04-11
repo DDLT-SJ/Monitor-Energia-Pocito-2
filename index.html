@@ -276,9 +276,23 @@
     ];
 
     // ========================================================================
+    // CLAVES JSON (igual que el sketch del ESP32)
+    // ========================================================================
+    const PIN_KEYS = [
+      "termo_principal_ent",
+      "termo_principal_sal",
+      "protec_sobrevoltaje",
+      "diferencial",
+      "termo_comedor_tomas",
+      "termo_comedor_ilum",
+      "termo_bombas_pozo",
+      "termo_bomba_pileta"
+    ];
+
+    // ========================================================================
     // ESTADO
     // ========================================================================
-    let estadoEntradas = [1, 1, 1, 1, 1, 1, 1, 1]; // 1 = normal, 0 = falla
+    let estadoEntradas = [null, null, null, null, null, null, null, null]; // null = sin datos
     let voltajeBateria = 0.0;
     let mqttClient = null;
     let conexionManual = false;  // false = auto, true = forzado por usuario
@@ -393,10 +407,10 @@
         document.getElementById('ipDisplay').textContent = data.ip;
       }
 
-      // Actualizar estado de entradas
+      // Actualizar estado de entradas (usando claves del sketch ESP32)
       if (data.entradas) {
         for (let i = 0; i < 8; i++) {
-          const pinKey = 'P' + i;
+          const pinKey = PIN_KEYS[i];
           if (pinKey in data.entradas) {
             const estado = parseInt(data.entradas[pinKey]);
             actualizarEntrada(i, estado);
@@ -429,7 +443,8 @@
 
       card.classList.remove('desconectado');
 
-      if (estado === 1) {
+      // according to sketch: 1 = FALLA, 0 = NORMAL
+      if (estado === 0) {
         card.className = 'entrada-card normal';
         estadoEl.textContent = 'Normal';
         iconoEl.textContent = '🟢';
@@ -444,11 +459,12 @@
     // ACTUALIZAR RESUMEN
     // ========================================================================
     function actualizarResumen() {
-      const ok = estadoEntradas.filter(e => e === 1).length;
-      const falla = estadoEntradas.filter(e => e === 0).length;
-      const desconectado = estadoEntradas.filter(e => e === null || e === undefined).length;
+      // 0 = NORMAL, 1 = FALLA
+      const ok = estadoEntradas.filter(e => e === 0).length;
+      const falla = estadoEntradas.filter(e => e === 1).length;
+      const sinDatos = estadoEntradas.filter(e => e === null || e === undefined).length;
 
-      if (desconectado > 0) {
+      if (sinDatos > 0) {
         document.getElementById('entradasOk').textContent = '--';
         document.getElementById('entradasFalla').textContent = '--';
         document.getElementById('uptimePercent').textContent = '--';

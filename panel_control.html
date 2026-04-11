@@ -227,59 +227,59 @@
       <h2>🔌 Entradas Digitales (P0-P7)</h2>
       <div class="pines-grid">
         <div class="pin-control">
-          <label>P0: Principal Ent</label>
+          <label>P0: Entrada Int. Principal</label>
           <select id="pin0" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P1: Principal Sal</label>
-          <select id="pin1" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+          <label>P1: Salida Int. Principal</label>
+          <select id="pin1" class="falla">
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P2: Sobrevoltaje</label>
+          <label>P2: Salida Int. Sobrevoltaje</label>
           <select id="pin2" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P3: Diferencial</label>
+          <label>P3: Salida Int. Diferencial</label>
           <select id="pin3" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P4: Heladera</label>
+          <label>P4: Salida Int. Heladera</label>
           <select id="pin4" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P5: Cámaras</label>
+          <label>P5: Salida Int. Cámaras</label>
           <select id="pin5" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P6: Bombas</label>
+          <label>P6: Salida Int. Bombas</label>
           <select id="pin6" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
         <div class="pin-control">
-          <label>P7: Piscina</label>
+          <label>P7: Salida Int. Piscina</label>
           <select id="pin7" class="normal">
-            <option value="0" selected>Normal</option>
-            <option value="1">FALLA</option>
+            <option value="0">Normal 🟢</option>
+            <option value="1" selected>FALLA 🔴</option>
           </select>
         </div>
       </div>
@@ -386,14 +386,26 @@
         btn.textContent = '⏳ Enviando...';
         mostrarStatus('Enviando datos...', 'enviando');
 
-        //Construir JSON de entradas
-        let jsonEntradas = '{"ip":"192.168.1.100","entradas":{';
+        // Claves JSON (igual que el sketch del ESP32)
+        const PIN_KEYS = [
+          "termo_principal_ent",
+          "termo_principal_sal",
+          "protec_sobrevoltaje",
+          "diferencial",
+          "termo_comedor_tomas",
+          "termo_comedor_ilum",
+          "termo_bombas_pozo",
+          "termo_bomba_pileta"
+        ];
+
+        // Construir JSON de entradas (igual formato que ESP32)
+        let jsonEntradas = '{';
         for (let i = 0; i < 8; i++) {
           const valor = document.getElementById('pin' + i).value;
-          jsonEntradas += '"P' + i + '":' + valor;
+          jsonEntradas += '"' + PIN_KEYS[i] + '":' + valor;
           if (i < 7) jsonEntradas += ',';
         }
-        jsonEntradas += '}}';
+        jsonEntradas += '}';
 
         // Publicar entradas
         mqttClient.publish(topic, jsonEntradas);
