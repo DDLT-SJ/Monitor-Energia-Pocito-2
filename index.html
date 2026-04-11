@@ -58,12 +58,16 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: #ff4444;
+      background: #808080;
       animation: pulse 1s infinite;
     }
 
     .led.connected {
       background: #00ff88;
+    }
+
+    .led.error {
+      background: #ff4444;
     }
 
     @keyframes pulse {
@@ -95,6 +99,11 @@
     .entrada-card.falla {
       border-left-color: #ff4444;
       background: rgba(255,68,68,0.1);
+    }
+
+    .entrada-card.desconectado {
+      border-left-color: #808080;
+      background: rgba(128,128,128,0.1);
     }
 
     .entrada-info {
@@ -258,14 +267,14 @@
 
       for (let i = 0; i < 8; i++) {
         const card = document.createElement('div');
-        card.className = 'entrada-card normal';
+        card.className = 'entrada-card desconectado';
         card.id = 'entrada-' + i;
         card.innerHTML = `
           <div class="entrada-info">
             <div class="entrada-nombre">P${i} - ${PIN_NOMBRES[i]}</div>
-            <div class="entrada-estado" id="estado-${i}">Normal</div>
+            <div class="entrada-estado" id="estado-${i}">--</div>
           </div>
-          <div class="entrada-icon" id="icono-${i}">🟢</div>
+          <div class="entrada-icon" id="icono-${i}">⚪</div>
         `;
         grid.appendChild(card);
       }
@@ -276,6 +285,9 @@
     // ========================================================================
     function conectarMQTT() {
       const url = `wss://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`;
+
+      console.log('Conectando MQTT:', url);
+      console.log('Username:', MQTT_CONFIG.username);
 
       const options = {
         username: MQTT_CONFIG.username,
@@ -290,9 +302,21 @@
       mqttClient.on('connect', () => {
         console.log('MQTT Conectado');
         document.getElementById('mqttLed').classList.add('connected');
+        document.getElementById('mqttLed').classList.remove('error');
         document.getElementById('mqttStatus').textContent = 'Conectado';
         mqttClient.subscribe(MQTT_CONFIG.topic);
         mqttClient.subscribe(MQTT_CONFIG.topicBateria);
+      });
+
+      mqttClient.on('reconnect', () => {
+        console.log('MQTT Reintentando...');
+      });
+
+      mqttClient.on('close', () => {
+        console.log('MQTT Conexión cerrada');
+        document.getElementById('mqttLed').classList.remove('connected');
+        document.getElementById('mqttStatus').textContent = 'Desconectado';
+        setAllEntradasDesconectado();
       });
 
       mqttClient.on('message', (topic, message) => {
@@ -307,12 +331,15 @@
       mqttClient.on('error', (err) => {
         console.error('MQTT Error:', err);
         document.getElementById('mqttLed').classList.remove('connected');
+        document.getElementById('mqttLed').classList.add('error');
         document.getElementById('mqttStatus').textContent = 'Error';
+        setAllEntradasDesconectado();
       });
 
       mqttClient.on('offline', () => {
         document.getElementById('mqttLed').classList.remove('connected');
         document.getElementById('mqttStatus').textContent = 'Desconectado';
+        setAllEntradasDesconectado();
       });
     }
 
@@ -359,6 +386,8 @@
       const estadoEl = document.getElementById('estado-' + pin);
       const iconoEl = document.getElementById('icono-' + pin);
 
+      card.classList.remove('desconectado');
+
       if (estado === 1) {
         card.className = 'entrada-card normal';
         estadoEl.textContent = 'Normal';
@@ -383,6 +412,21 @@
       // Calcular disponibilidad (simple: % de entradas OK)
       const percent = Math.round((ok / 8) * 100);
       document.getElementById('uptimePercent').textContent = percent + '%';
+    }
+
+    // ========================================================================
+    // PONER TODAS LAS ENTRADAS EN ESTADO DESCONECTADO (gris)
+    // ========================================================================
+    function setAllEntradasDesconectado() {
+      for (let i = 0; i < 8; i++) {
+        const card = document.getElementById('entrada-' + i);
+        const estadoEl = document.getElementById('estado-' + i);
+        const iconoEl = document.getElementById('icono-' + i);
+
+        card.className = 'entrada-card desconectado';
+        estadoEl.textContent = '--';
+        iconoEl.textContent = '⚪';
+      }
     }
 
     // ========================================================================
