@@ -212,6 +212,25 @@
 
     .log-entry.ok { background: rgba(0,255,136,0.1); color: #00ff88; }
     .log-entry.error { background: rgba(255,68,68,0.1); color: #ff4444; }
+    .log-entry.ntfy { background: rgba(255,170,0,0.1); color: #ffaa00; }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -330,7 +349,19 @@
     </div>
 
     <!-- BOTONES -->
-    <button class="btn btn-enviar" id="btnEnviar" onclick="enviarDatos()">📤 ENVIAR A MQTT</button>
+    <div class="panel">
+      <h2>🔔 Notificaciones Ntfy.sh</h2>
+      <div class="checkbox-group">
+        <input type="checkbox" id="enviarNtfy" checked>
+        <label for="enviarNtfy">Notificar cambios de estado</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="notificarInicio">
+        <label for="notificarInicio">Notificar inicio del sistema</label>
+      </div>
+    </div>
+
+    <button class="btn btn-enviar" id="btnEnviar" onclick="enviarDatos()">📤 ENVIAR A MQTT + NTFY</button>
 
     <div class="status" id="status"></div>
 
@@ -386,6 +417,92 @@
       const status = document.getElementById('status');
       status.textContent = mensaje;
       status.className = 'status ' + tipo;
+    }
+
+    // Estados anteriores para detectar cambios
+    let estadosAnteriores = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    // Nombres de pines (igual que el sketch)
+    const PIN_NOMBRES = [
+      "Entrada Interruptor Principal",
+      "Salida Interruptor Principal",
+      "Salida Interruptor Sobrevoltaje",
+      "Salida Interruptor Diferencial",
+      "Salida Interruptor Heladera",
+      "Salida Interruptor Cámaras",
+      "Salida Interruptor Bombas Principales",
+      "Salida Interruptor Bomba Piscina"
+    ];
+
+    // Enviar notificación a Ntfy.sh
+    async function enviarNtfy(titulo, mensaje, prioridad, emoji) {
+      const ntfyUrl = 'https://ntfy.sh/Monitor_Energia_Pocito';
+      
+      try {
+        const response = await fetch(ntfyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Title': titulo,
+            'Priority': prioridad,
+            'Tags': emoji
+          },
+          body: mensaje
+        });
+        
+        if (response.ok) {
+          log('Ntfy: ' + titulo, 'ntfy');
+          return true;
+        } else {
+          log('Ntfy ERROR: HTTP ' + response.status, 'error');
+          return false;
+        }
+      } catch (error) {
+        log('Ntfy ERROR: ' + error.message, 'error');
+        return false;
+      }
+    }
+
+    // Detectar cambios y enviar notificaciones
+    async function detectarCambiosYNotificar() {
+      const enviarNtfyCheck = document.getElementById('enviarNtfy').checked;
+      if (!enviarNtfyCheck) return;
+
+      let huboCambio = false;
+      
+      for (let i = 0; i < 8; i++) {
+        const valorActual = parseInt(document.getElementById('pin' + i).value);
+        const valorAnterior = estadosAnteriores[i];
+        
+        if (valorActual !== valorAnterior) {
+          huboCambio = true;
+          
+          if (valorActual === 1) {
+            // FALLA: Corte de energía
+            await enviarNtfy(
+              'FALLA DE ENERGIA POCITO',
+              'Corte de energia en ' + PIN_NOMBRES[i],
+              'default',
+              'red_circle'
+            );
+          } else {
+            // REPOSICIÓN: Energia restaurada
+            await enviarNtfy(
+              'REPOSICION DE ENERGIA POCITO',
+              'Reposicion de energia en ' + PIN_NOMBRES[i],
+              'default',
+              'green_circle'
+            );
+          }
+          
+          // Actualizar estado anterior
+          estadosAnteriores[i] = valorActual;
+        }
+      }
+      
+      if (huboCambio) {
+        log('Notificaciones enviadas para cambios detectados', 'ok');
+      }
     }
 
     async function enviarDatos() {
@@ -467,7 +584,21 @@
         mqttClient.end();
         mqttClient = null;
 
-        btn.textContent = '📤 ENVIAR A MQTT';
+        // Detectar cambios y enviar notificaciones Ntfy
+        await detectarCambiosYNotificar();
+
+        // Notificación de inicio si está marcada la opción
+        const notificarInicioCheck = document.getElementById('notificarInicio').checked;
+        if (notificarInicioCheck) {
+          await enviarNtfy(
+            'Sistema iniciado',
+            'Monitor Energia Pocito en linea\nPanel de control enviado manualmente',
+            'low',
+            'white_check_mark'
+          );
+        }
+
+        btn.textContent = '📤 ENVIAR A MQTT + NTFY';
         btn.disabled = false;
         mostrarStatus('✅ Datos enviados correctamente', 'ok');
         log('Envío completado', 'ok');
